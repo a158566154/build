@@ -1,0 +1,41 @@
+name: "Build Armbian"
+on:
+  workflow_dispatch:
+    inputs:
+      board:
+        description: "Target board (e.g., bananapim5)"
+        required: true
+        default: "cyber-aib-rk3588"
+      release:
+        description: "Ubuntu release (e.g., noble, jammy)"
+        required: true
+        default: "noble"
+      target:
+        description: "Build target (build=image, kernel=kernel)"
+        required: true
+        default: "build"
+
+jobs:
+  build-armbian:
+    runs-on: ubuntu-24.04-arm  # ARM architecture runner
+    # For x86 builds use: ubuntu-24.04
+    # For RISC-V builds use: ubuntu-24.04-riscv64
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Build Armbian
+        uses: armbian/build@main
+        with:
+          armbian_token: "${{ secrets.GITHUB_TOKEN }}"
+          armbian_release: "${{ inputs.release || 'noble' }}"
+          armbian_target: "${{ inputs.target || 'build' }}"
+          armbian_board: "${{ inputs.board || 'bananapim5' }}"
+          
+      - name: Upload artifacts
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: armbian-build-output
+          path: output/
